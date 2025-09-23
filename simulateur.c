@@ -30,6 +30,7 @@ typedef struct Directory {
 } Directory;
 
 /* prototypes */
+char *get_path(Directory *dir) ; 
 Directory *cd(Directory *current, char *nom); 
 Directory *create_root(void);
 Directory *mkdir(char *nom, Directory *parent);
@@ -54,7 +55,10 @@ int main(void)
 
     while (1)
     {
-        printf(">>> ");
+        char *path = get_path(current);
+        printf("%s >>> ", path); 
+        free(path);  // libérer après usage
+
         if (fgets(input, MAX_INPUT, stdin) == NULL) continue;
         input[strcspn(input, "\n")] = 0; // retirer \n
 
@@ -397,7 +401,7 @@ Directory *cd(Directory *current, char *nom)
         if (current->parent != NULL) {
             return current->parent;
         } else {
-            printf("❌ Déjà à la racine\n");
+            printf("Déjà à la racine\n");
             return current;
         }
     }
@@ -409,10 +413,33 @@ Directory *cd(Directory *current, char *nom)
         }
     }
 
-    printf("❌ Dossier '%s' introuvable\n", nom);
+    printf("Dossier '%s' introuvable\n", nom);
     return current;
 }
 
+
+char *get_path(Directory *dir) 
+{
+    if (dir == NULL) return strdup(""); 
+
+    // On remonte jusqu'à la racine pour construire le chemin
+    char buffer[1024] = "";
+    Directory *stack[100]; // pile temporaire
+    int top = 0;
+
+    while (dir != NULL) {
+        stack[top++] = dir;
+        dir = dir->parent;
+    }
+
+    // Reconstruire dans le bon ordre
+    for (int i = top - 1; i >= 0; i--) {
+        strcat(buffer, "/");
+        strcat(buffer, stack[i]->nom);
+    }
+
+    return strdup(buffer); // retourner une copie dynamique
+}
 
 
 void welcome(void) {
@@ -424,6 +451,7 @@ void welcome(void) {
     printf(BLUE   "   - mkdir [nom]   " RESET CYAN ": creer un dossier\n" RESET);
     printf(BLUE   "   - touch [nom]   " RESET CYAN ": creer un fichier\n" RESET);
     printf(BLUE   "   - ls            " RESET CYAN ": lister le contenu du dossier\n" RESET);
+    printf(BLUE   "   - cd            " RESET CYAN ": naviguer dans l'arbre\n" RESET);
     printf(BLUE   "   - rm [nom]      " RESET CYAN ": supprimer fichier ou dossier\n" RESET);
     printf(BLUE   "   - mv [src] [dst]" RESET CYAN ": deplacer un fichier ou dossier (à implémenter)\n" RESET);
     printf(BLUE   "   - exit          " RESET CYAN ": quitter le simulateur\n" RESET);
