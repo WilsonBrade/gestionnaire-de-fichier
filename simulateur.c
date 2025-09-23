@@ -30,6 +30,7 @@ typedef struct Directory {
 } Directory;
 
 /* prototypes */
+Directory *cd(Directory *current, char *nom); 
 Directory *create_root(void);
 Directory *mkdir(char *nom, Directory *parent);
 File *create_file(char *nom, char *contenu);
@@ -73,9 +74,9 @@ int main(void)
             } else {
                 Directory *newdir = mkdir(nom, current);
                 if (newdir) {
-                    printf(GREEN "Dossier '%s' créé avec succès\n" RESET, nom);
+                    printf(GREEN "Dossier '%s' cree avec succès\n" RESET, nom);
                 } else {
-                    printf(RED "Erreur création dossier\n" RESET);
+                    printf(RED "Erreur creation dossier\n" RESET);
                 }
             }
         }
@@ -83,6 +84,17 @@ int main(void)
         // ls
         else if (strcmp(input, "ls") == 0) {
             ls(current);
+        }
+
+        // cd
+        else if (strncmp(input, "cd", 2) == 0) {
+            char *nom = strtok(input + 3, " ");
+            if (nom == NULL) {
+                printf(RED "Usage : cd [nom] ou cd ..\n" RESET);
+            } else {
+                current = cd(current, nom);
+                printf("Vous etes dans '%s'\n", current->nom);
+            }
         }
 
         // touch
@@ -93,10 +105,10 @@ int main(void)
             } else {
                 File *f = create_file(nom, ""); // fichier vide
                 if (f == NULL) {
-                    printf(RED "Erreur création fichier\n" RESET);
+                    printf(RED "Erreur creation fichier\n" RESET);
                 } else {
                     if (add_file_to_dir(current, f) == 0) {
-                        printf(GREEN "Fichier '%s' créé avec succès\n" RESET, nom);
+                        printf(GREEN "Fichier '%s' cree avec succès\n" RESET, nom);
                     } else {
                         printf(RED "Erreur ajout fichier au répertoire\n" RESET);
                         free_file(f);
@@ -116,7 +128,7 @@ int main(void)
                 printf(RED "Usage : rm [nom]\n" RESET);
             } else {
                 if (remove_entry(current, nom)) {
-                    printf(GREEN "✅ '%s' supprimé\n" RESET, nom);
+                    printf(GREEN "'%s' supprime\n" RESET, nom);
                 } else {
                     printf(RED "'%s' introuvable\n" RESET, nom);
                 }
@@ -377,6 +389,30 @@ void tree(Directory *dir, int level)
         tree(dir->sous_dossiers[i], level + 1);
     }
 }
+
+Directory *cd(Directory *current, char *nom) 
+{
+    if (strcmp(nom, "..") == 0) {  
+        // Remonter
+        if (current->parent != NULL) {
+            return current->parent;
+        } else {
+            printf("❌ Déjà à la racine\n");
+            return current;
+        }
+    }
+
+    // Parcourir les sous-dossiers
+    for (int i = 0; i < current->nb_sous_dossiers; i++) {
+        if (strcmp(current->sous_dossiers[i]->nom, nom) == 0) {
+            return current->sous_dossiers[i];
+        }
+    }
+
+    printf("❌ Dossier '%s' introuvable\n", nom);
+    return current;
+}
+
 
 
 void welcome(void) {
